@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/aop
+	http://www.springframework.org/schema/aop/spring-aop.xsd
+	http://www.springframework.org/schema/tx 
+	http://www.springframework.org/schema/tx/spring-tx.xsd">
+	
+	<!-- 链接池c3p0配置 -->
+	<bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<property name="driverClassName" value="com.mysql.jdbc.Driver"></property>
+		<property name="url" value="jdbc:mysql:///spring03_transfer?useUnicode=true&amp;characterEncoding=utf8"></property>
+		<property name="username" value="root"></property>
+		<property name="password" value="1234"></property>
+	</bean>
+	
+	<!--  模板类配置
+	<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean> -->
+	
+	<!-- 平台配置管理器 -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+	
+	<!-- 配置通知 
+		切面类不用自己写，只需配置xml
+	-->
+	<tx:advice id="myAdvisor" transaction-manager="transactionManager">
+		<tx:attributes>
+			<!-- 此处填写所需事务管理的目标方法，还有其他属性，没写即为默认值 -->
+			<tx:method name="pay" propagation="REQUIRED"/>
+		</tx:attributes>
+	</tx:advice>
+
+	<!-- 配置切面 -->
+	<!-- 1.若自己编写的通知，则用aop:aspect标签
+		 2.若为spring框架提供的通知，则用aop:advisor 标签   
+	 -->
+	<aop:config>
+		<!-- advice-ref填写上面的通知id, -->
+		<aop:advisor advice-ref="myAdvisor" pointcut="execution(* com.test.demo2.*ServiceImpl.pay(..))"/>
+	</aop:config>
+	
+	
+	<!-- 业务层，持久层 -->
+	<bean id="accountService" class="com.test.demo2.AccountServiceImpl">
+		<property name="accountDao" ref="accountDao"></property>
+	</bean>
+	
+	<!-- 使用dataSource，JdbcDaoSupport会自动为我们创建 jdbcTemplate模板-->
+	<bean id="accountDao" class="com.test.demo2.AccountDaoImpl">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+
+
+
+
+
+
+
+
+
+
+</beans>
